@@ -1,0 +1,35 @@
+# Core server
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+python-dotenv==1.0.1
+pydantic==2.9.2
+
+# Video download
+yt-dlp==2024.10.7
+
+# Video processing
+opencv-python-headless==4.10.0.84
+Pillow==10.4.0
+imagehash==4.3.1
+
+# Notebook generation
+nbformat==5.10.4
+nbconvert==7.16.4
+
+# LLM clients
+anthropic==0.34.2
+groq==0.11.0
+ollama==0.3.3
+
+# Whisper (optional local transcription fallback)
+# Uses faster-whisper which has pre-built Windows wheels
+faster-whisper==1.0.3
+
+# Utilities
+httpx==0.27.2
+aiofiles==24.1.0
+webvtt-py==0.4.6
+srt==3.5.3
+rich==13.8.1
+tqdm==4.66.5
+numpy>=1.26.4
