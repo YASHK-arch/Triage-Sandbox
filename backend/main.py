@@ -305,3 +305,8 @@ if __name__ == "__main__":
         reload=False,
         log_level="info",
     )
+
+
+@app.get('/api/ping')
+def ping():
+    return {'ping': 'pong'}
