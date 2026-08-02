@@ -17,6 +17,18 @@
     "backend/main.py": {
       "label": "bknd-main",
       "color": "#dc0909"
+    },
+    "docs/": {
+      "label": "documentation",
+      "color": "#a6a8ab"
+    },
+    "vscode-extension/": {
+      "label": "extension",
+      "color": "#ffffff"
+    },
+    "backend/requirements.txt": {
+      "label": "dependencies",
+      "color": "#0f63c2"
     }
   }
 }
