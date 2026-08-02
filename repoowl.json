@@ -30,5 +30,13 @@
       "label": "dependencies",
       "color": "#0f63c2"
     }
+  },
+  "triage_config": {
+    "repo_context": "",
+    "needs_triage_threshold": 50,
+    "auto_close_threshold": 90,
+    "prompt_injection_guard": true,
+    "possible_duplicate_threshold": 60,
+    "close_duplicate_threshold": 90
   }
 }
