@@ -59,3 +59,7 @@ class PipelineStatus(BaseModel):
     progress: float  # 0.0 – 1.0
     level: Literal["info", "success", "warning", "error"] = "info"
     done: bool = False
+
+
+class JobStatus(BaseModel):
+    status: str
