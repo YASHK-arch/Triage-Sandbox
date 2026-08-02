@@ -1,0 +1,1 @@
+Node.js 18+ is required for backend scripts.
