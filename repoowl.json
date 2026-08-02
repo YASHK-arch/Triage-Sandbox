@@ -32,7 +32,7 @@
     }
   },
   "triage_config": {
-    "repo_context": "",
+    "repo_context": "Transform YouTube programming lectures into polished, topic-wise Jupyter notebooks with AI-extracted and refined code.",
     "needs_triage_threshold": 50,
     "auto_close_threshold": 90,
     "prompt_injection_guard": true,
