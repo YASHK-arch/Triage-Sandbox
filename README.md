@@ -179,3 +179,8 @@ FastAPI Backend (Python)
 ## License
 
 MIT
+
+## Setup Instructions
+1. Run `npm install`
+2. Run `npm run build`
+3. Deploy to production.
