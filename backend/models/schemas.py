@@ -26,7 +26,8 @@ class ExtractionConfig(BaseModel):
     use_whisper_fallback: bool = True
     embed_images_as_base64: bool = True
     ollama_host: str = "http://localhost:11434"
-
+    retry_count: int = 3
+    request_timeout: float = 60.0
 
 class ExtractionRequest(BaseModel):
     config: ExtractionConfig
