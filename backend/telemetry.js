@@ -1,0 +1,1 @@
+export const trackEvent = (name, data) => { console.log('Backend Event:', name, data); };

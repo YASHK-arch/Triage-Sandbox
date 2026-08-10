@@ -1,0 +1,1 @@
+export function trackVscodeEvent(name: string, data: any) { console.log('VSCode Event:', name, data); }
