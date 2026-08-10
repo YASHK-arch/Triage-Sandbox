@@ -1,0 +1,1 @@
+export const trackFrontendEvent = (name) => { console.log('Frontend:', name); };
