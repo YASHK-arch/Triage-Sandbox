@@ -13,7 +13,6 @@ permissions:
 
 jobs:
   analyze-pr:
-    # Only run if it's a PR creation OR if the comment contains exactly "/analyze" (or "/analyse")
     if: >
       github.event_name == 'pull_request_target' ||
       (github.event.issue.pull_request && (contains(github.event.comment.body, '/analyze') || contains(github.event.comment.body, '/analyse')))
@@ -22,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
