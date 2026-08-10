@@ -1,0 +1,6 @@
+{
+  "analyzer_enabled": true,
+  "target": "extension",
+  "premium_tier": true,
+  "crypto_wallet": "0xABCDEF1234567890"
+}
