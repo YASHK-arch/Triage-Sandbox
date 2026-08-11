@@ -71,7 +71,9 @@ def warning(stage: str, message: str, progress: float = 0.0):
     _emit(stage, message, "warning", progress)
 
 
-def error(stage: str, message: str, progress: float = 0.0):
+def error(stage: str, message: str, progress: float = 0.0, traceback: str = None):
+    if traceback:
+        message = f"{message}\\n{traceback}"
     _emit(stage, message, "error", progress)
 
 

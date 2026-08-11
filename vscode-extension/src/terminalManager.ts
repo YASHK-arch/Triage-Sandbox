@@ -22,6 +22,9 @@ export class TerminalManager {
      * Shows a dedicated "LectureForge Backend" terminal with live logs.
      */
     public async startBackend(port: number): Promise<boolean> {
+        if (port <= 0 || port > 65535) {
+            throw new Error("Invalid port number");
+        }
         const config = vscode.workspace.getConfiguration('lectureforge');
         const pythonPath = config.get<string>('pythonPath', 'python');
 
