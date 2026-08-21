@@ -1,20 +1,4 @@
 {
-  "path_labels": {
-    "src/assets": {
-      "label": "assets",
-      "color": "#0969da"
-    },
-    "public": {
-      "label": "public",
-      "color": "#09dc6f"
-    },
-    "src/components": {
-      "label": "components",
-      "color": "#f7ab08"
-    },
-    "src/App.jsx": {
-      "label": "app",
-      "color": "#9909dc"
-    }
-  }
+  "supabaseUrl": "https://sibuxeelgnsosfwraywn.supabase.co",
+  "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpYnV4ZWVsZ25zb3Nmd3JheXduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1NDUxNzYsImV4cCI6MjEwMjEyMTE3Nn0.Bj7Y3RYoBo2fxy86lUdALF38L3OQX4ypJ2gQKBOTdh0"
 }
