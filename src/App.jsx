@@ -30,7 +30,7 @@ function App() {
 
   return (
     <div className="bg-neutral-950 min-h-screen text-white font-sans">
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Navbar />
 
         <Routes>
