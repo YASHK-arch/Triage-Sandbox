@@ -15,7 +15,7 @@ jobs:
     if: github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/resolve')
     
     # Use the reusable workflow from the OpenHands repository
-    uses: All-Hands-AI/OpenHands/.github/workflows/openhands-resolver.yml@main
+    uses: All-Hands-AI/openhands-resolver/.github/workflows/openhands-resolver.yml@main
     with:
       macro: '/resolve'
     secrets:
