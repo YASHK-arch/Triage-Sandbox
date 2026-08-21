@@ -21,11 +21,11 @@ jobs:
     secrets:
       # You need to configure these secrets in your GitHub repository settings:
       
-      # Your LLM provider API key (e.g., Anthropic, OpenAI)
-      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      # Use your existing GROQ_API_KEY
+      LLM_API_KEY: ${{ secrets.GROQ_API_KEY }}
       
-      # The LLM model to use (e.g., 'anthropic/claude-3-5-sonnet-20241022')
-      LLM_MODEL: ${{ secrets.LLM_MODEL }}
+      # Use Groq's fastest large model
+      LLM_MODEL: "groq/llama-3.1-70b-versatile"
       
       # A GitHub Personal Access Token is recommended over standard GITHUB_TOKEN
       # so that the PRs created by the agent can trigger other CI workflows.
