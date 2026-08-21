@@ -1,0 +1,806 @@
+import React, { useState, useEffect, useRef } from "react";
+
+// ─── DATA ────────────────────────────────────────────────────────────────────
+
+const heroSlides = [
+  {
+    id: 1,
+    title: "Stranger Things",
+    subtitle: "Season 5 • Final Season",
+    tags: ["LIVE", "12.4Cr Views", "Sci-Fi Thriller", "English"],
+    description:
+      "The beginning of the end. Eleven and her friends face the ultimate threat as Vecna returns to claim Hawkins once and for all.",
+    badge: null,
+    bg: "from-[#0d1b4b] via-[#1a0a2e] to-black",
+    accent: "#e50914",
+    titleColor: "#fff",
+    live: false,
+  },
+  {
+    id: 2,
+    title: "IND vs ZIM",
+    subtitle: "Chennai – Super 8 • Toss at 6:30pm",
+    tags: ["LIVE", "1.4Cr Views", "ICC Men's T20 World Cup 2026", "Cricket"],
+    description:
+      "Watch the live stream of the ICC Men's T20 World Cup 2026 Super 8 match between India and Zimbabwe.",
+    badge: "LIVE",
+    bg: "from-[#1a0533] via-[#2e0f5c] to-black",
+    accent: "#1ac8f5",
+    titleColor: "#fff",
+    live: true,
+  },
+  {
+    id: 3,
+    title: "The Wolf of Wall Street",
+    subtitle: "New on JioHotstar",
+    tags: ["Drama", "Biography", "English", "18+"],
+    description:
+      "Jordan Belfort rises to a wealthy stockbroker living a life of excess before his rise and fall through corruption, fraud, and the federal government.",
+    badge: "NEW",
+    bg: "from-[#1c1000] via-[#2e1d00] to-black",
+    accent: "#f5c518",
+    titleColor: "#fff",
+    live: false,
+  },
+];
+
+const movieSections = [
+  {
+    title: "Continue Watching",
+    movies: [
+      { id: 1, title: "Tron: Ares", info: "9m left", badge: "हिंदी", color: "#0d2137" },
+      { id: 2, title: "Ted 2", info: "6m left", badge: "हिंदी", color: "#1c1400" },
+      { id: 3, title: "Bheeshma Parvam", info: "1h 46m left", badge: "हिंदी", color: "#1a0d0d" },
+      { id: 4, title: "Case of Kondana", info: "2h 10m left", badge: null, color: "#0d1a0d" },
+      { id: 5, title: "Gustaakh Ishq", info: "1h 2m left", badge: null, color: "#1a1200" },
+      { id: 6, title: "Sacred Games S1", info: "26m left", badge: null, color: "#1a0a0a" },
+    ],
+  },
+  {
+    title: "New on JioHotstar",
+    movies: [
+      { id: 7, title: "One Battle After Another", info: "Oscar® Nominee", badge: "OSCAR", color: "#0f1a2e" },
+      { id: 8, title: "Muzzle: City of Wolves", info: "Action Thriller", badge: null, color: "#1a1000" },
+      { id: 9, title: "Sangamarmar", info: "New Episodes Thu", badge: "NEW THU", color: "#2e1a00" },
+      { id: 10, title: "The Wolf of Wall Street", info: "Drama • Biography", badge: null, color: "#2e2000" },
+      { id: 11, title: "The Devil's Bride", info: "Horror • Mystery", badge: null, color: "#1a0d0d" },
+      { id: 12, title: "Engaged 2", info: "New Episode Daily", badge: "DAILY", color: "#1a0d1a" },
+      { id: 13, title: "Jurassic World", info: "Sci-Fi • Adventure", badge: "हिंदी", color: "#0d1a0d" },
+    ],
+  },
+  {
+    title: "Top 10 in India Today – Hindi",
+    ranked: true,
+    movies: [
+      { id: 14, title: "Laughter Chefs", info: "Reality Show", badge: null, color: "#2e1000" },
+      { id: 15, title: "Splitsvilla X6", info: "Reality Show", badge: null, color: "#1a0d2e" },
+      { id: 16, title: "Kis Kisko Pyaar Karoon 2", info: "Romantic Comedy", badge: null, color: "#2e0d2e" },
+      { id: 17, title: "The Devil's Bride", info: "Horror", badge: null, color: "#1a0d0d" },
+      { id: 18, title: "A Knight of the Seven Kingdoms", info: "HBO Original", badge: "HBO", color: "#0d1a2e" },
+      { id: 19, title: "Bhramam", info: "Thriller", badge: "हिंदी", color: "#0d0d1a" },
+      { id: 20, title: "Lucky", info: "Action", badge: null, color: "#1a1000" },
+    ],
+  },
+  {
+    title: "Popular Movies",
+    movies: [
+      { id: 21, title: "Lucky", info: "Action • हिंदी", badge: null, color: "#2e1500" },
+      { id: 22, title: "Anaconda: Cursed Jungle", info: "Newly Added", badge: "NEW", color: "#0d1a0d" },
+      { id: 23, title: "Kis Kisko Pyaar Karoon 2", info: "Newly Added", badge: "NEW", color: "#2e0d2e" },
+      { id: 24, title: "Ne Zha 2", info: "Newly Added • हिंदी", badge: "NEW", color: "#0d0d2e" },
+      { id: 25, title: "Hijack 1971", info: "Newly Added", badge: "NEW", color: "#1a1000" },
+      { id: 26, title: "Sarvam Maya", info: "Newly Added • हिंदी", badge: "NEW", color: "#1a0d0d" },
+      { id: 27, title: "Bhramam", info: "Newly Added", badge: "NEW", color: "#0d0d1a" },
+    ],
+  },
+  {
+    title: "Spy Thrillers",
+    movies: [
+      { id: 28, title: "Mission: Impossible", info: "Action • Thriller", badge: null, color: "#1a1000" },
+      { id: 29, title: "James Bond: No Time to Die", info: "Spy Thriller", badge: null, color: "#0d1a2e" },
+      { id: 30, title: "The Kingsman", info: "Spy Action", badge: null, color: "#1a0d0d" },
+      { id: 31, title: "Bourne Identity", info: "Thriller", badge: null, color: "#0d1a1a" },
+      { id: 32, title: "Salt", info: "Spy Thriller", badge: null, color: "#1a1a0d" },
+      { id: 33, title: "Atomic Blonde", info: "Action • Spy", badge: null, color: "#0d0d2e" },
+    ],
+  },
+  {
+    title: "Sci-Fi Worlds",
+    movies: [
+      { id: 34, title: "Interstellar", info: "Sci-Fi • Drama", badge: null, color: "#0d1a2e" },
+      { id: 35, title: "Dune: Part Two", info: "Sci-Fi • Epic", badge: null, color: "#2e1a00" },
+      { id: 36, title: "The Martian", info: "Sci-Fi • Adventure", badge: null, color: "#2e1000" },
+      { id: 37, title: "Gravity", info: "Sci-Fi • Thriller", badge: null, color: "#0d1a3e" },
+      { id: 38, title: "Arrival", info: "Sci-Fi • Mystery", badge: null, color: "#0d2e2e" },
+      { id: 39, title: "Tenet", info: "Sci-Fi • Action", badge: null, color: "#1a1a2e" },
+    ],
+  },
+  {
+    title: "Romance & Drama",
+    movies: [
+      { id: 40, title: "The Notebook", info: "Romance • Drama", badge: null, color: "#2e1a1a" },
+      { id: 41, title: "Dilwale Dulhania Le Jayenge", info: "Bollywood Classic", badge: null, color: "#2e0d1a" },
+      { id: 42, title: "Ae Dil Hai Mushkil", info: "Romance", badge: null, color: "#1a0d2e" },
+      { id: 43, title: "Before Sunrise", info: "Romantic Drama", badge: null, color: "#2e1a00" },
+      { id: 44, title: "La La Land", info: "Musical Romance", badge: null, color: "#0d1a2e" },
+      { id: 45, title: "Raazi", info: "Drama • Thriller", badge: null, color: "#0d1a0d" },
+    ],
+  },
+  {
+    title: "HBO Originals",
+    movies: [
+      { id: 46, title: "House of the Dragon", info: "Fantasy • Drama", badge: "HBO", color: "#1a0d0d" },
+      { id: 47, title: "The Last of Us", info: "Post-Apocalyptic", badge: "HBO", color: "#1a1a0d" },
+      { id: 48, title: "Succession", info: "Drama", badge: "HBO", color: "#0d1a2e" },
+      { id: 49, title: "Euphoria", info: "Teen Drama", badge: "HBO", color: "#1a0d2e" },
+      { id: 50, title: "The White Lotus", info: "Satire • Drama", badge: "HBO", color: "#2e1a00" },
+      { id: 51, title: "Westworld", info: "Sci-Fi • Thriller", badge: "HBO", color: "#2e1000" },
+    ],
+  },
+];
+
+// ─── MOVIE CARD ──────────────────────────────────────────────────────────────
+
+function MovieCard({ movie, ranked, rank, progress }) {
+  const [hovered, setHovered] = useState(false);
+
+  // Generate a repeatable gradient based on movie id
+  const hue1 = (movie.id * 47) % 360;
+  const hue2 = (movie.id * 83 + 120) % 360;
+
+  return (
+    <div
+      className="relative flex-shrink-0 cursor-pointer group"
+      style={{ width: ranked ? 180 : 200 }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {/* Rank number */}
+      {ranked && (
+        <span
+          style={{
+            position: "absolute",
+            left: -28,
+            bottom: 0,
+            fontSize: 90,
+            fontWeight: 900,
+            lineHeight: 1,
+            color: "transparent",
+            WebkitTextStroke: "2px rgba(255,255,255,0.18)",
+            fontFamily: "'Arial Black', sans-serif",
+            zIndex: 2,
+            userSelect: "none",
+          }}
+        >
+          {rank}
+        </span>
+      )}
+
+      {/* Poster */}
+      <div
+        style={{
+          width: "100%",
+          aspectRatio: ranked ? "2/3" : "16/9",
+          borderRadius: 8,
+          overflow: "hidden",
+          background: `linear-gradient(135deg, hsl(${hue1},60%,12%) 0%, hsl(${hue2},50%,8%) 100%)`,
+          border: hovered ? "2px solid rgba(255,255,255,0.5)" : "2px solid transparent",
+          transition: "border 0.2s, transform 0.2s, box-shadow 0.2s",
+          transform: hovered ? "scale(1.04)" : "scale(1)",
+          boxShadow: hovered ? `0 8px 32px hsla(${hue1},60%,30%,0.5)` : "none",
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {/* Faux poster art */}
+        <div style={{ opacity: 0.25, fontSize: 48, userSelect: "none" }}>🎬</div>
+
+        {/* Title overlay on thumbnail */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: "24px 10px 8px",
+            background: "linear-gradient(to top, rgba(0,0,0,0.85), transparent)",
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#fff",
+            lineHeight: 1.3,
+          }}
+        >
+          {movie.title}
+        </div>
+
+        {/* Badge */}
+        {movie.badge && (
+          <div
+            style={{
+              position: "absolute",
+              top: 8,
+              left: 8,
+              background:
+                movie.badge === "HBO"
+                  ? "#fff"
+                  : movie.badge === "NEW" || movie.badge.startsWith("NEW")
+                  ? "#1ac8f5"
+                  : movie.badge === "OSCAR"
+                  ? "#f5c518"
+                  : movie.badge === "DAILY"
+                  ? "#e84393"
+                  : "#e50914",
+              color:
+                movie.badge === "HBO" || movie.badge === "OSCAR" ? "#000" : "#fff",
+              fontSize: 9,
+              fontWeight: 900,
+              padding: "2px 6px",
+              borderRadius: 3,
+              letterSpacing: 0.5,
+            }}
+          >
+            {movie.badge}
+          </div>
+        )}
+
+        {/* Progress bar */}
+        {progress && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 3,
+              background: "rgba(255,255,255,0.2)",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                width: `${progress}%`,
+                background: "#1ac8f5",
+                borderRadius: 2,
+              }}
+            />
+          </div>
+        )}
+
+        {/* Play on hover */}
+        {hovered && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(0,0,0,0.35)",
+            }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.15)",
+                border: "2px solid rgba(255,255,255,0.8)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backdropFilter: "blur(4px)",
+              }}
+            >
+              <span style={{ fontSize: 18, marginLeft: 3 }}>▶</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Info below */}
+      <div style={{ padding: "6px 2px 0" }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "#e8e8e8", lineHeight: 1.3 }}>
+          {movie.title}
+        </div>
+        <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>{movie.info}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MOVIE ROW ───────────────────────────────────────────────────────────────
+
+function MovieRow({ section }) {
+  const scrollRef = useRef(null);
+  const progressMap = [87, 94, 14, 79, 98, 22];
+
+  const scroll = (dir) => {
+    scrollRef.current?.scrollBy({ left: dir * 420, behavior: "smooth" });
+  };
+
+  return (
+    <div style={{ marginBottom: 40 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 16,
+          paddingRight: 16,
+        }}
+      >
+        <h2
+          style={{
+            fontSize: 20,
+            fontWeight: 700,
+            color: "#fff",
+            letterSpacing: -0.3,
+          }}
+        >
+          {section.title}
+        </h2>
+        <button
+          style={{
+            fontSize: 12,
+            color: "#aaa",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontWeight: 600,
+          }}
+        >
+          View All &rsaquo;
+        </button>
+      </div>
+
+      <div style={{ position: "relative" }}>
+        {/* Left arrow */}
+        <button
+          onClick={() => scroll(-1)}
+          style={{
+            position: "absolute",
+            left: -20,
+            top: "40%",
+            transform: "translateY(-50%)",
+            zIndex: 10,
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            background: "rgba(0,0,0,0.8)",
+            border: "1px solid rgba(255,255,255,0.2)",
+            color: "#fff",
+            fontSize: 18,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          ‹
+        </button>
+
+        {/* Scrollable row */}
+        <div
+          ref={scrollRef}
+          style={{
+            display: "flex",
+            gap: section.ranked ? 44 : 12,
+            overflowX: "auto",
+            paddingBottom: 8,
+            paddingLeft: section.ranked ? 32 : 0,
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}
+        >
+          {section.movies.map((movie, i) => (
+            <MovieCard
+              key={movie.id}
+              movie={movie}
+              ranked={section.ranked}
+              rank={i + 1}
+              progress={section.title.startsWith("Continue") ? progressMap[i] : null}
+            />
+          ))}
+        </div>
+
+        {/* Right arrow */}
+        <button
+          onClick={() => scroll(1)}
+          style={{
+            position: "absolute",
+            right: -20,
+            top: "40%",
+            transform: "translateY(-50%)",
+            zIndex: 10,
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            background: "rgba(0,0,0,0.8)",
+            border: "1px solid rgba(255,255,255,0.2)",
+            color: "#fff",
+            fontSize: 18,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          ›
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── HERO BANNER ─────────────────────────────────────────────────────────────
+
+function HeroBanner() {
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [fading, setFading] = useState(false);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setFading(true);
+      setTimeout(() => {
+        setActiveSlide((s) => (s + 1) % heroSlides.length);
+        setFading(false);
+      }, 400);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const slide = heroSlides[activeSlide];
+
+  const hue = activeSlide === 0 ? 230 : activeSlide === 1 ? 270 : 40;
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        height: "88vh",
+        minHeight: 540,
+        overflow: "hidden",
+        background: "#000",
+      }}
+    >
+      {/* Animated background gradient */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: `
+            radial-gradient(ellipse 70% 80% at 30% 50%, hsla(${hue},80%,20%,0.7) 0%, transparent 70%),
+            radial-gradient(ellipse 50% 60% at 75% 40%, hsla(${(hue + 40) % 360},60%,15%,0.5) 0%, transparent 60%),
+            linear-gradient(to right, #000 20%, transparent 60%)
+          `,
+          transition: "background 1s ease",
+          opacity: fading ? 0 : 1,
+        }}
+      />
+
+      {/* Faux poster illustration on right */}
+      <div
+        style={{
+          position: "absolute",
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: "55%",
+          background: `linear-gradient(135deg, hsla(${hue},70%,18%,0.6) 0%, hsla(${(hue+60)%360},50%,10%,0.4) 100%)`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 180,
+          opacity: 0.15,
+          userSelect: "none",
+          transition: "opacity 0.4s",
+        }}
+      >
+        🎬
+      </div>
+
+      {/* Gradient vignette left */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "linear-gradient(to right, #000 30%, transparent 65%, transparent 80%, #000 100%)",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "linear-gradient(to top, #000 0%, transparent 40%)",
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* Content */}
+      <div
+        style={{
+          position: "absolute",
+          left: 60,
+          bottom: 140,
+          maxWidth: 560,
+          opacity: fading ? 0 : 1,
+          transition: "opacity 0.4s",
+        }}
+      >
+        {/* Live badge */}
+        {slide.live && (
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              background: "#e50914",
+              color: "#fff",
+              fontSize: 12,
+              fontWeight: 800,
+              padding: "3px 10px",
+              borderRadius: 4,
+              marginBottom: 10,
+              letterSpacing: 1,
+            }}
+          >
+            <span
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                background: "#fff",
+                animation: "pulse 1.2s infinite",
+              }}
+            />
+            LIVE
+          </div>
+        )}
+
+        {/* Title */}
+        <h1
+          style={{
+            fontSize: "clamp(40px, 6vw, 72px)",
+            fontWeight: 900,
+            color: "#fff",
+            lineHeight: 1.05,
+            letterSpacing: -1,
+            margin: "0 0 8px",
+            fontFamily: "'Arial Black', 'Helvetica Neue', sans-serif",
+          }}
+        >
+          {slide.title}
+        </h1>
+
+        {/* Subtitle */}
+        <p style={{ fontSize: 16, color: "#ccc", marginBottom: 14 }}>
+          {slide.subtitle}
+        </p>
+
+        {/* Tags */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+          {slide.tags.map((tag, i) => (
+            <span
+              key={i}
+              style={{
+                fontSize: 12,
+                color: i === 0 && slide.live ? "#ff4444" : "#bbb",
+                fontWeight: i === 0 && slide.live ? 700 : 400,
+                borderRight: i < slide.tags.length - 1 ? "1px solid #555" : "none",
+                paddingRight: 8,
+              }}
+            >
+              {i === 0 && slide.live && (
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: 7,
+                    height: 7,
+                    background: "#ff4444",
+                    borderRadius: "50%",
+                    marginRight: 5,
+                    verticalAlign: "middle",
+                  }}
+                />
+              )}
+              {tag}
+            </span>
+          ))}
+        </div>
+
+        {/* Description */}
+        <p
+          style={{
+            fontSize: 14,
+            color: "#aaa",
+            lineHeight: 1.6,
+            marginBottom: 28,
+            maxWidth: 460,
+          }}
+        >
+          {slide.description}
+        </p>
+
+        {/* Buttons */}
+        <div style={{ display: "flex", gap: 12 }}>
+          <button
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "12px 28px",
+              borderRadius: 6,
+              background: "linear-gradient(90deg, #1a6cf5, #9c27b0)",
+              color: "#fff",
+              fontSize: 15,
+              fontWeight: 700,
+              border: "none",
+              cursor: "pointer",
+              letterSpacing: 0.3,
+            }}
+          >
+            ▶ Watch Now
+          </button>
+          <button
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "12px 24px",
+              borderRadius: 6,
+              background: "rgba(255,255,255,0.12)",
+              color: "#fff",
+              fontSize: 15,
+              fontWeight: 600,
+              border: "1px solid rgba(255,255,255,0.25)",
+              cursor: "pointer",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            + Watchlist
+          </button>
+        </div>
+      </div>
+
+      {/* Slide thumbnails / dots */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 60,
+          left: 60,
+          display: "flex",
+          gap: 8,
+          alignItems: "center",
+        }}
+      >
+        {heroSlides.map((s, i) => (
+          <button
+            key={s.id}
+            onClick={() => {
+              setFading(true);
+              setTimeout(() => {
+                setActiveSlide(i);
+                setFading(false);
+              }, 300);
+            }}
+            style={{
+              width: i === activeSlide ? 28 : 8,
+              height: 4,
+              borderRadius: 2,
+              background: i === activeSlide ? "#1a6cf5" : "rgba(255,255,255,0.3)",
+              border: "none",
+              cursor: "pointer",
+              transition: "width 0.3s, background 0.3s",
+              padding: 0,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Thumbnail strip top-right */}
+      <div
+        style={{
+          position: "absolute",
+          right: 60,
+          bottom: 60,
+          display: "flex",
+          gap: 8,
+        }}
+      >
+        {heroSlides.map((s, i) => (
+          <div
+            key={s.id}
+            onClick={() => {
+              setFading(true);
+              setTimeout(() => {
+                setActiveSlide(i);
+                setFading(false);
+              }, 300);
+            }}
+            style={{
+              width: 90,
+              height: 54,
+              borderRadius: 6,
+              background: `linear-gradient(135deg, hsl(${(i * 90 + 200) % 360},50%,15%), hsl(${(i * 90 + 260) % 360},40%,10%))`,
+              border: i === activeSlide ? "2px solid #fff" : "2px solid rgba(255,255,255,0.2)",
+              cursor: "pointer",
+              overflow: "hidden",
+              transition: "border 0.2s",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 22,
+              opacity: 0.7,
+            }}
+          >
+            🎬
+          </div>
+        ))}
+        <div
+          style={{
+            width: 28,
+            height: 54,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#fff",
+            fontSize: 22,
+            cursor: "pointer",
+          }}
+        >
+          ›
+        </div>
+      </div>
+
+      {/* Pulse animation keyframes */}
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.4; transform: scale(0.8); }
+        }
+        ::-webkit-scrollbar { display: none; }
+      `}</style>
+    </div>
+  );
+}
+
+// ─── MAIN MOVIES PAGE ─────────────────────────────────────────────────────────
+
+function Movies() {
+  return (
+    <div
+      style={{
+        background: "#0a0a0a",
+        minHeight: "100vh",
+        color: "#fff",
+        fontFamily: "'Helvetica Neue', Arial, sans-serif",
+      }}
+    >
+      {/* Hero */}
+      <HeroBanner />
+
+      {/* Movie Sections */}
+      <div
+        style={{
+          padding: "40px 60px 60px",
+          maxWidth: 1600,
+          margin: "0 auto",
+        }}
+      >
+        {movieSections.map((section) => (
+          <MovieRow key={section.title} section={section} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default Movies;
+
+
+
+
+
