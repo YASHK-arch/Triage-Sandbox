@@ -1,0 +1,20 @@
+{
+  "path_labels": {
+    "src/assets": {
+      "label": "assets",
+      "color": "#0969da"
+    },
+    "public": {
+      "label": "public",
+      "color": "#09dc6f"
+    },
+    "src/components": {
+      "label": "components",
+      "color": "#f7ab08"
+    },
+    "src/App.jsx": {
+      "label": "app",
+      "color": "#9909dc"
+    }
+  }
+}
