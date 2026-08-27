@@ -57,7 +57,7 @@ function Watchlist({ watchlist, setWatchlist, handleRemoveFromWatchlist }) {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+    <div className="p-4 md:p-8 pt-20 md:pt-24 max-w-7xl mx-auto">
       <h2 className="text-3xl font-bold mb-6 border-l-4 border-yellow-500 pl-4">Your Watchlist</h2>
 
       {/* Genre Filter */}
