@@ -1,6 +1,9 @@
-import React from 'react'
+import React, { useState } from 'react'
+import MovieModal from './MovieModal'
 
 function MovieCard({ title, posterUrl, movieObj, watchlist, handleAddtoWatchlist, handleRemoveFromWatchlist }) {
+  const [showModal, setShowModal] = useState(false);
+
   let isWatchlisted = false;
   
   if (watchlist) {
@@ -19,6 +22,7 @@ function MovieCard({ title, posterUrl, movieObj, watchlist, handleAddtoWatchlist
     <div className='w-48 sm:w-56 bg-neutral-900 rounded-lg overflow-hidden group shadow-lg flex flex-col hover:-translate-y-1 transition-transform duration-300'>
       {/* Poster Section */}
       <div 
+        onClick={() => setShowModal(true)}
         className='relative h-72 sm:h-80 w-full bg-cover bg-center cursor-pointer' 
         style={{ backgroundImage: `url(https://image.tmdb.org/t/p/w500/${posterUrl})` }}
       >
@@ -31,14 +35,14 @@ function MovieCard({ title, posterUrl, movieObj, watchlist, handleAddtoWatchlist
         <div className='absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300 backdrop-blur-sm'>
           {isWatchlisted ? (
             <button 
-              onClick={() => handleRemoveFromWatchlist(movieObj)}
+              onClick={(e) => { e.stopPropagation(); handleRemoveFromWatchlist(movieObj); }}
               className='flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full font-semibold transition-colors'
             >
               <i className="fa-solid fa-check"></i> Remove
             </button>
           ) : (
             <button 
-              onClick={() => handleAddtoWatchlist(movieObj)}
+              onClick={(e) => { e.stopPropagation(); handleAddtoWatchlist(movieObj); }}
               className='flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded-full font-bold transition-colors'
             >
               <i className="fa-solid fa-plus"></i> Watchlist
@@ -70,6 +74,10 @@ function MovieCard({ title, posterUrl, movieObj, watchlist, handleAddtoWatchlist
           </div>
         </div>
       </div>
+
+      {showModal && (
+        <MovieModal movie={movieObj} onClose={() => setShowModal(false)} />
+      )}
     </div>
   )
 }
