@@ -22,9 +22,18 @@ jobs:
     permissions:
       issues: write
     steps:
+      - name: Generate token (if using GitHub App)
+        id: generate-token
+        if: secrets.REPOOWL_APP_ID != '' && secrets.REPOOWL_PRIVATE_KEY != ''
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.REPOOWL_APP_ID }}
+          private-key: ${{ secrets.REPOOWL_PRIVATE_KEY }}
+
       - name: Assign author if no exclusion labels
         uses: actions/github-script@v9
         with:
+          github-token: ${{ steps.generate-token.outputs.token || secrets.GITHUB_TOKEN }}
           script: |
             const EXCLUSION_LABELS = ['needs-triage', 'spam', 'duplicate'];
             const issue = context.payload.issue;
@@ -58,9 +67,18 @@ jobs:
     permissions:
       issues: write
     steps:
+      - name: Generate token (if using GitHub App)
+        id: generate-token
+        if: secrets.REPOOWL_APP_ID != '' && secrets.REPOOWL_PRIVATE_KEY != ''
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.REPOOWL_APP_ID }}
+          private-key: ${{ secrets.REPOOWL_PRIVATE_KEY }}
+
       - name: Queue a valid assignment request
         uses: actions/github-script@v9
         with:
+          github-token: ${{ steps.generate-token.outputs.token || secrets.GITHUB_TOKEN }}
           script: |
             const body = context.payload.comment.body.trim();
             const issue = context.payload.issue;
@@ -82,9 +100,18 @@ jobs:
       issues: write
       pull-requests: read
     steps:
+      - name: Generate token (if using GitHub App)
+        id: generate-token
+        if: secrets.REPOOWL_APP_ID != '' && secrets.REPOOWL_PRIVATE_KEY != ''
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.REPOOWL_APP_ID }}
+          private-key: ${{ secrets.REPOOWL_PRIVATE_KEY }}
+
       - name: Reassign eligible issues
         uses: actions/github-script@v9
         with:
+          github-token: ${{ steps.generate-token.outputs.token || secrets.GITHUB_TOKEN }}
           script: |
             const DAY = 24 * 60 * 60 * 1000;
             const INACTIVITY_PERIOD = 7 * DAY;
