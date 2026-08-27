@@ -1,0 +1,21 @@
+name: Welcome New Contributors
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Thank the issue author
+        uses: actions/github-script@v9
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'ð Thanks for raising this issue!\n\nA maintainer will review it shortly. Please do **not** start working on it until you have been assigned â our auto-assignment bot will assign you if your issue passes triage, or a maintainer may assign you manually.'
+            });
