@@ -19,7 +19,7 @@ const REPOSITORY = process.env.REPOSITORY; // format: owner/repo
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 
-const MODEL_NAME = 'llama-3.3-70b-versatile';
+const MODEL_NAME = 'qwen/qwen3.6-27b';
 
 
 
@@ -37,60 +37,48 @@ const HARD_TRIAGE_FLOOR = 50;       // slop score >= this triggers needs-triage
 
 
 
-async function askGroq(prompt) {
+async function askGroq(prompt, retries = 5, defaultDelayMs = 10000) {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const response = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: MODEL_NAME,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
 
-
-  const response = await fetch(GROQ_URL, {
-
-
-    method: 'POST',
-
-
-    headers: {
-
-
-      'Authorization': `Bearer ${GROQ_API_KEY}`,
-
-
-      'Content-Type': 'application/json'
-
-
-    },
-
-
-    body: JSON.stringify({
-
-
-      model: MODEL_NAME,
-
-
-      messages: [{ role: "user", content: prompt }]
-
-
-    })
-
-
-  });
-
-
-  if (!response.ok) {
-
+    if (response.ok) {
+      const data = await response.json();
+      const raw = data.choices[0].message.content;
+      // Qwen3 models emit a <think>...</think> chain-of-thought block by default.
+      // Strip it so internal reasoning never leaks into GitHub comments.
+      return raw.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+    }
 
     const errorText = await response.text();
 
+    // Handle Rate Limits (HTTP 429)
+    if (response.status === 429 && attempt < retries - 1) {
+      let waitTime = defaultDelayMs;
+      // Extract exact wait time from Groq error message: "Please try again in 14.4225s"
+      const match = errorText.match(/try again in ([\d\.]+)s/);
+      if (match && match[1]) {
+        waitTime = Math.ceil(parseFloat(match[1])) * 1000 + 1500; // add 1.5s buffer
+      } else {
+        waitTime = defaultDelayMs * Math.pow(2, attempt); // Fallback to exponential backoff
+      }
+      
+      console.warn(`[Attempt ${attempt + 1}/${retries}] Rate limit hit. Waiting ${waitTime / 1000}s before retrying...`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      continue;
+    }
 
-    throw new Error(`Groq API error: ${errorText}`);
-
-
+    throw new Error(`Groq API error (Status ${response.status}): ${errorText}`);
   }
-
-
-  const data = await response.json();
-
-
-  return data.choices[0].message.content;
-
-
 }
 
 
@@ -634,20 +622,24 @@ async function executeTriageAction(owner, repo, pullNumber, analysis, markdownRe
 
 
   // -- Enforce Label Colors --------------------------------------------
-  if (Object.keys(labelColorsToEnforce).length > 0) {
+  const allLabelsToCheck = new Set([...Object.keys(labelColorsToEnforce), ...labelsToAdd]);
+  
+  if (allLabelsToCheck.size > 0) {
     console.log('Ensuring labels exist with correct colors...');
-    for (const [labelName, colorHex] of Object.entries(labelColorsToEnforce)) {
+    for (const labelName of allLabelsToCheck) {
       try {
         const getLabelRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/labels/${encodeURIComponent(labelName)}`, { headers: ghHeaders });
         if (getLabelRes.status === 404) {
+          const colorHex = labelColorsToEnforce[labelName] || Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
           console.log(`  Creating label '${labelName}' with color #${colorHex}`);
           await fetch(`https://api.github.com/repos/${owner}/${repo}/labels`, {
             method: 'POST',
             headers: ghHeaders,
             body: JSON.stringify({ name: labelName, color: colorHex })
           });
-        } else if (getLabelRes.ok) {
+        } else if (getLabelRes.ok && labelColorsToEnforce[labelName]) {
           const labelData = await getLabelRes.json();
+          const colorHex = labelColorsToEnforce[labelName];
           if (labelData.color !== colorHex) {
             console.log(`  Label '${labelName}' already exists - updating color to #${colorHex} per settings.`);
             await fetch(`https://api.github.com/repos/${owner}/${repo}/labels/${encodeURIComponent(labelName)}`, {
@@ -1089,65 +1081,45 @@ async function run() {
 
 
 
-  console.log(`Mapping ${filteredFiles.length} files...`);
+  // Batch files into at most MAP_BATCH_COUNT blocks so the map phase makes
+  // at most 5 Groq calls instead of one per file, and pace the calls to stay
+  // under the model's rate limits.
+  const MAP_BATCH_COUNT = 5;
+  const PER_FILE_PATCH_CHARS = 2000;
+  const MAP_BATCH_DELAY_MS = 8000;
 
+  const batchSize = Math.max(1, Math.ceil(filteredFiles.length / MAP_BATCH_COUNT));
+  const fileBatches = [];
+  for (let i = 0; i < filteredFiles.length; i += batchSize) {
+    fileBatches.push(filteredFiles.slice(i, i + batchSize));
+  }
+
+  console.log(`Mapping ${filteredFiles.length} files in ${fileBatches.length} batched block(s)...`);
 
   const fileSummaries = [];
 
-
-
-
-
-  for (const file of filteredFiles) {
-
-
+  for (let b = 0; b < fileBatches.length; b++) {
+    const batch = fileBatches[b];
     try {
-
-
-      console.log(`Summarizing ${file.filename}...`);
-
-
+      console.log(`Summarizing block ${b + 1}/${fileBatches.length} (${batch.map(f => f.filename).join(', ')})...`);
+      const filesBlock = batch.map(f =>
+        `File: ${f.filename}\nStatus: ${f.status}\nPatch:\n${f.patch.substring(0, PER_FILE_PATCH_CHARS)}`
+      ).join('\n\n---\n\n');
       const mapPrompt = `
+        For EACH file below, return exactly one line in this format: "- **<filename>**: <summary>".
+        The summary must describe what that file's diff does in 2 sentences max. Do not add anything else.
 
-
-        Briefly summarize what this specific file diff does in 2 sentences max.
-
-
-        File: ${file.filename}
-
-
-        Status: ${file.status}
-
-
-        Patch:
-
-
-        ${file.patch.substring(0, 10000)}
-
-
+        ${filesBlock}
       `;
-
-
       const summary = await askGroq(mapPrompt);
-
-
-      fileSummaries.push(`- **${file.filename}**: ${summary}`);
-
-
-      await new Promise(r => setTimeout(r, 1000));
-
-
+      fileSummaries.push(summary);
+      if (b < fileBatches.length - 1) {
+        await new Promise(r => setTimeout(r, MAP_BATCH_DELAY_MS));
+      }
     } catch (err) {
-
-
-      console.warn(`Could not summarize ${file.filename}:`, err.message);
-
-
+      console.warn(`Could not summarize block ${b + 1}:`, err.message);
     }
-
-
   }
-
 
 
 
@@ -1179,9 +1151,17 @@ async function run() {
 
 
 
-  const codeChangesBlock = fileSummaries.length > 0 ? fileSummaries.join('\n') : 'No significant code changes found.';
+  let codeChangesBlock = fileSummaries.length > 0 ? fileSummaries.join('\n') : 'No significant code changes found.';
 
 
+
+  // Truncate codeChangesBlock to prevent hitting API token limits (8000 TPM limit on free tier)
+  // ~12000 chars is roughly 3000 tokens. This leaves room for the prompt and output response.
+  const MAX_CHANGES_LENGTH = 12000;
+  if (codeChangesBlock.length > MAX_CHANGES_LENGTH) {
+    codeChangesBlock = codeChangesBlock.substring(0, MAX_CHANGES_LENGTH) + '\n\n...[TRUNCATED FOR LENGTH: PR contains too many changes to fully analyze under API limits]...';
+    console.warn(`Code changes block exceeded ${MAX_CHANGES_LENGTH} chars. Truncated to avoid rate limits (413 errors).`);
+  }
 
 
 
@@ -1192,6 +1172,8 @@ async function run() {
 
 
   console.log('Phase 1: Getting structured triage JSON...');
+  // Pace the reduce phase to stay under the model's rate limits.
+  await new Promise(r => setTimeout(r, MAP_BATCH_DELAY_MS));
 
 
 
@@ -1310,6 +1292,7 @@ Rules for recommended_action:
 
 
   console.log('Phase 2: Generating markdown review...');
+  await new Promise(r => setTimeout(r, MAP_BATCH_DELAY_MS));
 
 
 
@@ -1351,7 +1334,12 @@ ${codeChangesBlock}
 
 
 
-Write a PR review using EXACTLY this format. Output only the review â no preamble, no JSON:
+CRITICAL OUTPUT RULES — MUST FOLLOW EXACTLY:
+- Do NOT include any thinking, reasoning, planning, or analysis steps in your response.
+- Do NOT include any preamble, introduction, numbered lists, or draft/refinement sections.
+- Do NOT write "Here's a thinking process", "Let me analyze", "Draft Output", "Map Input", or anything similar.
+- Begin your response IMMEDIATELY with the "> **Slop Badge:**" line. Nothing before it.
+- Output ONLY the final formatted review and nothing else.
 
 
 
@@ -1405,7 +1393,17 @@ Write a PR review using EXACTLY this format. Output only the review â no pr
   try {
 
 
-    markdownReview = await askGroq(reviewPrompt);
+    const rawReview = await askGroq(reviewPrompt);
+
+    // Post-process guard: strip any thinking preamble the model emitted outside
+    // its <think> block (e.g. "Here's a thinking process: ..."). The review
+    // must begin with the > **Slop Badge:** blockquote anchor.
+    const anchorMatch = rawReview.match(/(\u003e\s*\*\*Slop Badge:[\s\S]*)/i);
+    markdownReview = anchorMatch ? anchorMatch[1].trim() : rawReview.trim();
+
+    if (!anchorMatch) {
+      console.warn('Warning: LLM review did not start at the expected anchor. Using full output as fallback.');
+    }
 
 
   } catch (err) {
