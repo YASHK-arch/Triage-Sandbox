@@ -144,64 +144,18 @@ async function addContextualLabels(repo, issue, analysis) {
   if (!analysis.contextual_labels || !Array.isArray(analysis.contextual_labels) || analysis.contextual_labels.length === 0) {
     return;
   }
-
-  // Ensure exactly 3 labels
-  const labelsToApply = analysis.contextual_labels.slice(0, 3);
-  const colors = ['D4C5F9', '0366D6', '7057FF', 'E4E669', 'D876E3', '008672', 'B60205', 'F9D0C4', '1D76DB', '0E8A16'];
-  const shuffledColors = colors.sort(() => 0.5 - Math.random());
-
-  // Create labels with distinct colors if they don't exist
-  for (let i = 0; i < labelsToApply.length; i++) {
-    const label = labelsToApply[i];
-    const color = shuffledColors[i];
-    
-    await fetch(`https://api.github.com/repos/${repo}/labels`, {
-      method: 'POST',
-      headers: ghHeaders(),
-      body: JSON.stringify({ name: label, color: color })
-    }); // We ignore 422 (already exists) or other errors here
-  }
-
   const url = `https://api.github.com/repos/${repo}/issues/${issue.number}/labels`;
   const res = await fetch(url, {
     method: 'POST',
     headers: ghHeaders(),
     body: JSON.stringify({
-      labels: labelsToApply
+      labels: analysis.contextual_labels
     })
   });
   if (!res.ok) {
     console.warn(`  - Failed to add labels to issue #${issue.number}: ${await res.text()}`);
   } else {
-    console.log(`  - Added labels: ${labelsToApply.join(', ')}`);
-  }
-}
-
-
-async function postAnalysisComment(repo, issue, analysis) {
-  const url = `https://api.github.com/repos/${repo}/issues/${issue.number}/comments`;
-  
-  const yamlContent = `is_duplicate: ${analysis.is_duplicate}
-analysis_summary: |
-  ${analysis.analysis_summary.replace(/\n/g, '\n  ')}
-contextual_labels:
-${(analysis.contextual_labels || []).slice(0, 3).map(l => `  - ${l}`).join('\n')}
-affected_files:
-${(analysis.affected_files || []).map(f => `  - ${f}`).join('\n')}
-`;
-
-  const body = `<img src="https://raw.githubusercontent.com/YASHK-arch/RepoOwl-extension/main/icons/icon128.png" width="30" height="30" /> **RepoOwl Issue Analysis**\n\n\`\`\`yaml\n${yamlContent}\n\`\`\``;
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: ghHeaders(),
-    body: JSON.stringify({ body })
-  });
-
-  if (!res.ok) {
-    console.warn(`  - Failed to post comment to issue #${issue.number}: ${await res.text()}`);
-  } else {
-    console.log(`  - Posted analysis comment to issue #${issue.number}`);
+    console.log(`  - Added labels: ${analysis.contextual_labels.join(', ')}`);
   }
 }
 
@@ -288,7 +242,7 @@ async function analyzeIssue(issue, history, fileTree) {
     `  - Default to is_duplicate=false when uncertain.\n\n` +
     `CONTEXTUAL LABELS:\n` +
     `  - Generate exactly 3 meaningful, contextually appropriate labels for this issue.\n` +
-    `  - Labels MUST be based on the technical context and root architecture of the request, NOT keyword extraction from the text.\n` +
+    `  - Labels must describe the functional area, severity, or domain of the problem NOT just keywords extracted from the text.\n` +
     `  - Examples of GOOD labels: "authentication", "performance-regression", "data-integrity", "ux-feedback", "api-contract".\n` +
     `  - Examples of BAD labels: "issue", "bug", "problem", "fix", "error" these are too generic.\n` +
     `  - Labels should be lowercase, hyphen-separated, and 1-3 words max.\n\n` +
@@ -391,7 +345,6 @@ async function run() {
       const analysis = await analyzeIssue(issue, history, fileTree);
       await saveAnalysis(repo, issue, analysis);
       await addContextualLabels(repo, issue, analysis);
-      await postAnalysisComment(repo, issue, analysis);
 
       analyzedCount++;
       if (analysis.is_duplicate) duplicateCount++;
