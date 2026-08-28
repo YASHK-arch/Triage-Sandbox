@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import MovieModal from "./MovieModal";
 
 // TMDB Genre ID configuration
 const genreids = {
@@ -27,6 +28,7 @@ function Watchlist({ watchlist, setWatchlist, handleRemoveFromWatchlist }) {
   const [search, setSearch] = useState("");
   const [genreList, setGenreList] = useState(["All Genres"]);
   const [currGenre, setCurrGenre] = useState("All Genres");
+  const [selectedMovie, setSelectedMovie] = useState(null);
 
   useEffect(() => {
     let temp = watchlist.map((movieObj) => {
@@ -124,13 +126,20 @@ function Watchlist({ watchlist, setWatchlist, handleRemoveFromWatchlist }) {
               })
               .map((movieObj) => (
                 <tr key={movieObj.id} className="hover:bg-neutral-800/50 transition-colors">
-                  <td className="px-6 py-4 flex items-center gap-4">
-                    <img
-                      className="h-20 w-14 object-cover rounded-md shadow"
-                      src={`https://image.tmdb.org/t/p/w500/${movieObj.poster_path}`}
-                      alt={movieObj.title}
-                    />
-                    <div className="font-bold text-white text-lg">{movieObj.title}</div>
+                  <td className="px-6 py-4">
+                    <button
+                      onClick={() => setSelectedMovie(movieObj)}
+                      className="flex items-center gap-4 text-left cursor-pointer group"
+                    >
+                      <img
+                        className="h-20 w-14 object-cover rounded-md shadow group-hover:scale-105 transition-transform"
+                        src={`https://image.tmdb.org/t/p/w500/${movieObj.poster_path}`}
+                        alt={movieObj.title}
+                      />
+                      <div className="font-bold text-white text-lg group-hover:text-yellow-500 transition-colors">
+                        {movieObj.title}
+                      </div>
+                    </button>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1 font-semibold text-yellow-500">
@@ -162,6 +171,10 @@ function Watchlist({ watchlist, setWatchlist, handleRemoveFromWatchlist }) {
           </div>
         )}
       </div>
+
+      {selectedMovie && (
+        <MovieModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
+      )}
     </div>
   );
 }
