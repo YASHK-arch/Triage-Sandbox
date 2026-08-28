@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import MovieModal from "./MovieModal";
 
 function Banner() {
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedMovie, setSelectedMovie] = useState(null);
 
   useEffect(() => {
     async function fetchTrending() {
@@ -132,7 +134,10 @@ function Banner() {
                 <i className="fa-solid fa-play"></i> Watch Now
               </button>
               
-              <button className="flex items-center gap-2 px-6 md:px-8 py-3 bg-white/10 backdrop-blur-md text-white rounded-lg font-bold text-lg hover:bg-white/20 hover:scale-105 border border-white/20 transition-all duration-300 shadow-lg">
+              <button
+                onClick={() => setSelectedMovie(currentMovie)}
+                className="flex items-center gap-2 px-6 md:px-8 py-3 bg-white/10 backdrop-blur-md text-white rounded-lg font-bold text-lg hover:bg-white/20 hover:scale-105 border border-white/20 transition-all duration-300 shadow-lg"
+              >
                 <i className="fa-solid fa-circle-info border-white"></i> Details
               </button>
             </div>
@@ -153,6 +158,11 @@ function Banner() {
           ></button>
         ))}
       </div>
+
+      {/* Detailed movie description popup */}
+      {selectedMovie && (
+        <MovieModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
+      )}
     </div>
   );
 }
