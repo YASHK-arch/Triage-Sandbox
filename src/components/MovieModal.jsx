@@ -8,6 +8,8 @@ function MovieModal({ movie, onClose }) {
   const [scenes, setScenes] = useState([]);
   const [currentScene, setCurrentScene] = useState(0);
   const [details, setDetails] = useState(null);
+  const [trailer, setTrailer] = useState(null);
+  const [playingTrailer, setPlayingTrailer] = useState(false);
 
   useEffect(() => {
     if (!movie) return;
@@ -16,12 +18,15 @@ function MovieModal({ movie, onClose }) {
 
     async function fetchData() {
       try {
-        const [detailRes, imagesRes] = await Promise.all([
+        const [detailRes, imagesRes, videosRes] = await Promise.all([
           axios.get(
             `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${API_KEY}&language=en-US`
           ),
           axios.get(
             `https://api.themoviedb.org/3/movie/${movie.id}/images?api_key=${API_KEY}`
+          ),
+          axios.get(
+            `https://api.themoviedb.org/3/movie/${movie.id}/videos?api_key=${API_KEY}&language=en-US`
           ),
         ]);
         if (!mounted) return;
@@ -32,6 +37,13 @@ function MovieModal({ movie, onClose }) {
           ? backdrops.map((b) => b.file_path)
           : [movie.backdrop_path || movie.poster_path];
         setScenes(slideImages);
+        // Prefer the official YouTube trailer for the movie.
+        const videos = videosRes.data.results || [];
+        const trailerVideo =
+          videos.find((v) => v.type === "Trailer" && v.site === "YouTube" && v.official) ||
+          videos.find((v) => v.type === "Trailer" && v.site === "YouTube") ||
+          null;
+        setTrailer(trailerVideo);
       } catch (error) {
         console.error("Failed to load movie details:", error);
       }
@@ -79,18 +91,49 @@ function MovieModal({ movie, onClose }) {
   const releaseDate = details?.release_date || "";
   const languages = details?.spoken_languages?.map((l) => l.english_name).join(", ") || "";
   const tagline = details?.tagline || "";
+  const trailerUrl = trailer ? `https://www.youtube.com/embed/${trailer.key}?autoplay=1` : null;
 
   return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-    >
+    <>
+      {/* Trailer Player Overlay */}
+      {playingTrailer && trailerUrl && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 p-4"
+          onClick={() => setPlayingTrailer(false)}
+        >
+          <div
+            className="relative w-full max-w-4xl aspect-video bg-black rounded-xl overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <iframe
+              className="absolute inset-0 w-full h-full"
+              src={trailerUrl}
+              title={`${movie.title} Trailer`}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+            <button
+              onClick={() => setPlayingTrailer(false)}
+              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 border border-white/20 text-white flex items-center justify-center transition-colors"
+              aria-label="Close trailer"
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+      )}
+
       <div
-        className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-neutral-900 shadow-2xl border border-neutral-700"
-        onClick={(e) => e.stopPropagation()}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+        onClick={onClose}
+        role="dialog"
+        aria-modal="true"
       >
+        <div
+          className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-neutral-900 shadow-2xl border border-neutral-700"
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Scene Slider */}
         <div className="relative h-64 sm:h-80 md:h-96 w-full bg-neutral-950 overflow-hidden">
           <div
@@ -202,6 +245,14 @@ function MovieModal({ movie, onClose }) {
             <button className="flex items-center gap-2 px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-black rounded-full font-bold text-sm transition-colors">
               <i className="fa-solid fa-play"></i> Watch
             </button>
+            {trailerUrl && (
+              <button
+                onClick={() => setPlayingTrailer(true)}
+                className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-full font-bold text-sm transition-colors"
+              >
+                <i className="fa-solid fa-circle-play"></i> Watch Trailer
+              </button>
+            )}
             <button className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-full font-semibold text-sm transition-colors">
               <i className="fa-solid fa-star"></i> Review
             </button>
@@ -214,7 +265,9 @@ function MovieModal({ movie, onClose }) {
           </div>
         </div>
       </div>
-    </div>,
+      </div>
+      </>
+    ,
     document.body
   );
 }
