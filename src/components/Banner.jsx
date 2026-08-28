@@ -11,9 +11,14 @@ function Banner() {
         const response = await axios.get(
           `https://api.themoviedb.org/3/trending/movie/day?api_key=3aec63790d50f3b9fc2efb4c15a8cf99&language=en-US`
         );
-        // Only keep movies with backdrop images
-        const validMovies = response.data.results.filter(movie => movie.backdrop_path);
-        setTrendingMovies(validMovies.slice(0, 10)); // Take top 10
+        // Only keep movies with backdrop images and ensure each image is unique
+        const seenBackdrops = new Set();
+        const validMovies = response.data.results.filter((movie) => {
+          if (!movie.backdrop_path || seenBackdrops.has(movie.backdrop_path)) return false;
+          seenBackdrops.add(movie.backdrop_path);
+          return true;
+        });
+        setTrendingMovies(validMovies.slice(0, 10)); // Take top 10 unique
       } catch (error) {
         console.error("Failed to fetch trending movies for banner:", error);
       }
@@ -42,12 +47,12 @@ function Banner() {
   return (
     <div className="relative h-[65vh] md:h-[80vh] w-full bg-neutral-950 overflow-hidden group">
       
-      {/* Background Slideshow images wrapper */}
+      {/* Background Slideshow images wrapper - all slides stay stacked with a true crossfade */}
       {trendingMovies.map((movie, index) => (
-        <div 
+        <div
           key={movie.id}
           className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-            index === currentIndex ? "opacity-100 z-0" : "opacity-0 -z-10"
+            index === currentIndex ? "opacity-100 z-0" : "opacity-0 z-0"
           }`}
           style={{
             backgroundImage: `url(https://image.tmdb.org/t/p/original/${movie.backdrop_path})`,
