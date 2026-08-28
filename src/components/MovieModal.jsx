@@ -26,10 +26,19 @@ function MovieModal({ movie, onClose }) {
         ]);
         if (!mounted) return;
         setDetails(detailRes.data);
-        // Build a scene slider from backdrops. Fall back to the card poster.
+        // Build a scene slider from unique backdrops (max 10 images per movie).
+        // Fall back to the card poster when no backdrops are available.
         const backdrops = imagesRes.data.backdrops || [];
-        const slideImages = backdrops.length
-          ? backdrops.map((b) => b.file_path)
+        const uniqueBackdrops = [];
+        const seen = new Set();
+        for (const b of backdrops) {
+          if (seen.has(b.file_path)) continue;
+          seen.add(b.file_path);
+          uniqueBackdrops.push(b);
+          if (uniqueBackdrops.length === 10) break;
+        }
+        const slideImages = uniqueBackdrops.length
+          ? uniqueBackdrops.map((b) => b.file_path)
           : [movie.backdrop_path || movie.poster_path];
         setScenes(slideImages);
       } catch (error) {
