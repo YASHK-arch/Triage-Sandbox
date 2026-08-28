@@ -1,0 +1,15 @@
+/* Smooth page fade transition when navigating via the navbar */
+.page-fade-in {
+  animation: pageFadeIn 0.5s ease-in-out;
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -2,7 +2,7 @@ import MoodSelector from "./components/MoodSelector";
 import Movies from "./components/Movies";
 import Navbar from "./components/Navbar";
 import Watchlist from "./components/Watchlist";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 function App() {
@@ -28,19 +28,29 @@ function App() {
     setWatchlist(JSON.parse(moviesFromLocalStorage));
   }, []);
 
+  const location = useLocation();
+
   return (
     <div className="bg-neutral-950 min-h-screen text-white font-sans">
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <Navbar />
+      <Navbar />
 
-        <Routes>
+      <div key={location.pathname} className="page-fade-in">
+        <Routes location={location}>
           <Route path="/" element={<Movies watchlist={watchlist} handleAddtoWatchlist={handleAddtoWatchlist} handleRemoveFromWatchlist={handleRemoveFromWatchlist} />} />
           <Route path="/watchlist" element={<Watchlist watchlist={watchlist} setWatchlist={setWatchlist} handleRemoveFromWatchlist={handleRemoveFromWatchlist} />} />
           <Route path="/mood" element={<MoodSelector watchlist={watchlist} handleAddtoWatchlist={handleAddtoWatchlist} handleRemoveFromWatchlist={handleRemoveFromWatchlist} />} />
         </Routes>
-      </BrowserRouter>
+      </div>
     </div>
   );
 }
 
-export default App;
+function AppRoot() {
+  return (
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
+      <App />
+    </BrowserRouter>
+  );
+}
+
+export default AppRoot;
