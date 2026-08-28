@@ -8,6 +8,8 @@ function MovieModal({ movie, onClose }) {
   const [scenes, setScenes] = useState([]);
   const [currentScene, setCurrentScene] = useState(0);
   const [details, setDetails] = useState(null);
+  const [trailer, setTrailer] = useState(null);
+  const [isPlayingTrailer, setIsPlayingTrailer] = useState(false);
 
   useEffect(() => {
     if (!movie) return;
@@ -16,12 +18,15 @@ function MovieModal({ movie, onClose }) {
 
     async function fetchData() {
       try {
-        const [detailRes, imagesRes] = await Promise.all([
+        const [detailRes, imagesRes, videosRes] = await Promise.all([
           axios.get(
             `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${API_KEY}&language=en-US`
           ),
           axios.get(
             `https://api.themoviedb.org/3/movie/${movie.id}/images?api_key=${API_KEY}`
+          ),
+          axios.get(
+            `https://api.themoviedb.org/3/movie/${movie.id}/videos?api_key=${API_KEY}&language=en-US`
           ),
         ]);
         if (!mounted) return;
@@ -32,6 +37,13 @@ function MovieModal({ movie, onClose }) {
           ? backdrops.map((b) => b.file_path)
           : [movie.backdrop_path || movie.poster_path];
         setScenes(slideImages);
+
+        const videos = videosRes.data.results || [];
+        const trailerVideo =
+          videos.find((v) => v.type === "Trailer" && v.site === "YouTube" && v.official) ||
+          videos.find((v) => v.type === "Trailer" && v.site === "YouTube") ||
+          null;
+        setTrailer(trailerVideo);
       } catch (error) {
         console.error("Failed to load movie details:", error);
       }
@@ -44,12 +56,12 @@ function MovieModal({ movie, onClose }) {
   }, [movie]);
 
   useEffect(() => {
-    if (scenes.length === 0) return;
+    if (scenes.length === 0 || isPlayingTrailer) return;
     const timer = setInterval(() => {
       setCurrentScene((prev) => (prev + 1) % scenes.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, [scenes.length]);
+  }, [scenes.length, isPlayingTrailer]);
 
   // Close on Escape and prevent background scroll while open.
   useEffect(() => {
@@ -93,11 +105,36 @@ function MovieModal({ movie, onClose }) {
       >
         {/* Scene Slider */}
         <div className="relative h-64 sm:h-80 md:h-96 w-full bg-neutral-950 overflow-hidden">
-          <div
-            className="absolute inset-0 bg-cover bg-center transition-all duration-1000"
-            style={{ backgroundImage: `url(${backdropUrl})` }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/40 to-transparent" />
+          {isPlayingTrailer && trailer ? (
+            <div className="absolute inset-0 z-10 bg-black flex items-center justify-center">
+              <iframe
+                className="w-full h-full"
+                src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1`}
+                title={`${movie.title} Trailer`}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsPlayingTrailer(false);
+                }}
+                className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 border border-white/20 text-white flex items-center justify-center transition-colors shadow-lg"
+                aria-label="Close trailer"
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          ) : (
+            <>
+              <div
+                className="absolute inset-0 bg-cover bg-center transition-all duration-1000"
+                style={{ backgroundImage: `url(${backdropUrl})` }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/40 to-transparent pointer-events-none" />
+            </>
+          )}
 
           {/* Badge + Rating */}
           <div className="absolute top-4 left-4 flex items-center gap-2">
@@ -131,7 +168,7 @@ function MovieModal({ movie, onClose }) {
           )}
 
           {/* Scene navigation arrows */}
-          {scenes.length > 1 && (
+          {!isPlayingTrailer && scenes.length > 1 && (
             <>
               <button
                 onClick={(e) => {
@@ -202,6 +239,14 @@ function MovieModal({ movie, onClose }) {
             <button className="flex items-center gap-2 px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-black rounded-full font-bold text-sm transition-colors">
               <i className="fa-solid fa-play"></i> Watch
             </button>
+            {trailer && !isPlayingTrailer && (
+              <button
+                onClick={() => setIsPlayingTrailer(true)}
+                className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-full font-bold text-sm transition-colors"
+              >
+                <i className="fa-brands fa-youtube"></i> Watch Trailer
+              </button>
+            )}
             <button className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-full font-semibold text-sm transition-colors">
               <i className="fa-solid fa-star"></i> Review
             </button>
